@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-app
+  labels:
+    purpose: workshop-demo
+    team: platform-engineering
+    environment: development
+  annotations:
+    description: "Namespace for the Kubernetes workshop demo application"
+    created-by: "Platform Engineering Team"
+    workshop: "Introduction to Kubernetes"

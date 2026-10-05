@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+  namespace: demo
+  labels:
+    app: demo
+  annotations:
+    description: "Configuration data for the demo application"
+data:
+  config-key: config-value
+  another-key: another-value

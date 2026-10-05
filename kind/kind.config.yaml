@@ -1,0 +1,14 @@
+---
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  # Pinned to k8s 1.36.1 - requires kind v0.30+ for this node image. Run `kind version` to check.
+  - role: control-plane
+    image: kindest/node:v1.36.1
+  - role: worker
+    image: kindest/node:v1.36.1
+  - role: worker
+    image: kindest/node:v1.36.1
+# No containerdConfigPatches here on purpose - a registry-mirror + insecure_skip_verify patch can
+# break containerd's own CRI startup outright. Public image pulls (docker.io, quay.io) work fine
+# without one.

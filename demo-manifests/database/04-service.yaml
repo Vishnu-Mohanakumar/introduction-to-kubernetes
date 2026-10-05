@@ -1,0 +1,35 @@
+---
+# Service for PostgreSQL StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: demo-database
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  type: ClusterIP
+  # Important: StatefulSets need headless service for stable network identities
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+  namespace: demo-database
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  clusterIP: None  # This makes it headless
+  type: ClusterIP

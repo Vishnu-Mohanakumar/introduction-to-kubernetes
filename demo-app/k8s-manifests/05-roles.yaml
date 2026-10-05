@@ -1,0 +1,43 @@
+---
+# Role for reading pods, configmaps, and managing secrets in the demo-app namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: demo-app-role
+  namespace: demo-app
+  labels:
+    app: demo-app
+    component: rbac
+  annotations:
+    description: "Role with permissions for demo application operations"
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+# ClusterRole for reading nodes (cluster-wide resource)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: demo-app-cluster-role
+  labels:
+    app: demo-app
+    component: rbac
+  annotations:
+    description: "ClusterRole for reading cluster-wide resources"
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]

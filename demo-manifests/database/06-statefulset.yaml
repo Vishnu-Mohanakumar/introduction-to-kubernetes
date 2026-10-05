@@ -1,0 +1,107 @@
+---
+# StatefulSet for PostgreSQL with persistent storage
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+  namespace: demo-database
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres-headless  # Must match headless service name
+  replicas: 3  # postgres-statefulset-0 is the primary, -1 and -2 stream from it as real replicas
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        command: ["/bin/bash", "/scripts/entrypoint.sh"]
+        ports:
+        - containerPort: 5432
+          name: postgres
+        envFrom:
+        - configMapRef:
+            name: postgres-config
+        - secretRef:
+            name: postgres-secret
+        env:
+        # Add pod-specific information
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        # PostgreSQL specific configuration
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: PRIMARY_HOST
+          value: postgres-statefulset-0.postgres-headless
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-entrypoint
+          mountPath: /scripts
+        - name: postgres-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - workshop_user
+            - -d
+            - workshop_db
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - workshop_user
+            - -d
+            - workshop_db
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-entrypoint
+        configMap:
+          name: postgres-scripts
+          defaultMode: 0755
+          items:
+          - key: entrypoint.sh
+            path: entrypoint.sh
+      - name: postgres-initdb
+        configMap:
+          name: postgres-scripts
+          defaultMode: 0755
+          items:
+          - key: create-replication-user.sh
+            path: create-replication-user.sh
+  # This is the key part - persistent volume claim templates
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+      # In production, you'd specify a storageClass
+      # storageClassName: "fast-ssd"

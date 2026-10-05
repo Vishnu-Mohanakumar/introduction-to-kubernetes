@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-config
+  namespace: demo-app
+  labels:
+    app: demo-app
+    component: configuration
+  annotations:
+    description: "Configuration data for the demo application"
+data:
+  # Application configuration
+  APP_NAME: "Kubernetes Workshop Demo"
+  APP_VERSION: "1.0.0"
+  ENVIRONMENT: "development"
+  LOG_LEVEL: "INFO"
+  
+  # Feature flags
+  FEATURE_FLAG: "enabled"
+  
+  # Database configuration (non-sensitive)
+  DATABASE_URL: "postgresql://demo-db:5432/workshop"
+  DATABASE_POOL_SIZE: "10"
+  
+  # API configuration
+  API_TIMEOUT: "30"
+  API_RETRY_COUNT: "3"
+  
+  # Custom application settings
+  WELCOME_MESSAGE: "Welcome to the Kubernetes Workshop!"
+  MAX_UPLOAD_SIZE: "10MB"

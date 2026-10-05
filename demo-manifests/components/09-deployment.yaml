@@ -1,0 +1,45 @@
+# deployment that uses these resources within the demo:
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+  namespace: demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      serviceAccountName: demo-service-account
+      containers:
+        - name: demo-container
+          image: nginx:alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: CONFIG_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-config
+                  key: config-key
+            - name: ANOTHER_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-config
+                  key: another-key
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secret
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secret
+                  key: password

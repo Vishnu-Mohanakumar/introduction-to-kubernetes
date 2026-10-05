@@ -1,0 +1,167 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app-deployment
+  namespace: demo-app
+  labels:
+    app: demo-app
+    component: backend
+    version: v1
+  annotations:
+    description: "Main deployment for the demo application"
+    deployment.kubernetes.io/revision: "1"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        component: backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/health"
+    spec:
+      serviceAccountName: demo-app-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: demo-app
+        image: k8s-demo-app:latest
+        imagePullPolicy: IfNotPresent  # Use local/loaded image (killercoda builds in-place, KIND uses kind load)
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+        env:
+        # Pod information
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        # Configuration from ConfigMap
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: APP_NAME
+        - name: APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: APP_VERSION
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: ENVIRONMENT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: LOG_LEVEL
+        - name: FEATURE_FLAG
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: FEATURE_FLAG
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: demo-app-config
+              key: DATABASE_URL
+        # Secrets
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: demo-app-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: demo-app-secrets
+              key: DB_PASSWORD
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demo-app-secrets
+              key: API_KEY
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: demo-app-secrets
+              key: SECRET_KEY
+        # RBAC permissions (for demo purposes)
+        - name: RBAC_PODS
+          value: "true"
+        - name: RBAC_SECRETS
+          value: "true"
+        - name: RBAC_CONFIGMAPS
+          value: "true"
+        # Service information
+        - name: SERVICE_NAME
+          value: "demo-app-service"
+        - name: SERVICE_TYPE
+          value: "ClusterIP"
+        - name: SERVICE_PORT
+          value: "80"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1

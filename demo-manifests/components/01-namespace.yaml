@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    purpose: demo
+    team: devops
+  annotations:
+    description: "A namespace for demonstration purposes"

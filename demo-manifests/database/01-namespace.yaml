@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-database
+  labels:
+    purpose: statefulset-demo
+    type: database
+  annotations:
+    description: "Namespace for StatefulSet and persistent storage demonstration"

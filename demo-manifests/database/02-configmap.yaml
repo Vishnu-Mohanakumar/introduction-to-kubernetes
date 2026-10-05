@@ -1,0 +1,14 @@
+---
+# ConfigMap for PostgreSQL configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: demo-database
+data:
+  POSTGRES_DB: workshop_db
+  POSTGRES_USER: workshop_user
+  # Non-sensitive database configuration
+  POSTGRES_MAX_CONNECTIONS: "100"
+  POSTGRES_SHARED_BUFFERS: "256MB"
+  POSTGRES_WORK_MEM: "4MB"
