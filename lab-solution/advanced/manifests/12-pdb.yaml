@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: voting-app
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  maxUnavailable: 1

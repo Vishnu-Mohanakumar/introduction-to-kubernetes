@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-front
+  namespace: voting-app
+  labels:
+    app: azure-vote-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-vote-front
+  template:
+    metadata:
+      labels:
+        app: azure-vote-front
+    spec:
+      containers:
+        - name: azure-vote-front
+          image: neilpeterson/azure-vote-front:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: RELEASE_CHANNEL
+              valueFrom:
+                configMapKeyRef:
+                  name: frontend-config
+                  key: release-channel
+            - name: REDIS
+              value: redis
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

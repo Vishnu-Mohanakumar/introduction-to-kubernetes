@@ -1,0 +1,100 @@
+---
+# ConfigMap for database configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: todo-app
+  labels:
+    app: postgres
+    component: database
+data:
+  POSTGRES_DB: todoapp
+  POSTGRES_USER: todouser
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-scripts
+  namespace: todo-app
+  labels:
+    app: postgres
+    component: database
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    ORDINAL="${HOSTNAME##*-}"
+
+    if [ "$ORDINAL" = "0" ]; then
+      echo "[entrypoint] $HOSTNAME is ordinal 0 -> starting as primary"
+      exec docker-entrypoint.sh postgres
+    fi
+
+    echo "[entrypoint] $HOSTNAME is ordinal $ORDINAL -> starting as replica of $PRIMARY_HOST"
+
+    if [ ! -s "$PGDATA/PG_VERSION" ]; then
+      echo "[entrypoint] empty data directory, waiting for primary before cloning"
+      until pg_isready -h "$PRIMARY_HOST" -p 5432 -U "$POSTGRES_USER" -q; do
+        echo "[entrypoint] primary not ready yet, retrying in 2s"
+        sleep 2
+      done
+      echo "[entrypoint] cloning from primary via pg_basebackup"
+      PGPASSWORD="$POSTGRES_REPLICATION_PASSWORD" pg_basebackup \
+        -h "$PRIMARY_HOST" -p 5432 -U replicator -D "$PGDATA" -Fp -Xs -P -R
+    else
+      echo "[entrypoint] data directory already initialized, skipping base backup"
+    fi
+
+    exec docker-entrypoint.sh postgres
+  create-replication-user.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD '$POSTGRES_REPLICATION_PASSWORD';
+    EOSQL
+
+    cat >> "$PGDATA/postgresql.conf" <<-EOF
+
+    # --- Streaming replication + tuning, appended by create-replication-user.sh ---
+    wal_level = replica
+    max_wal_senders = 5
+    max_replication_slots = 5
+    hot_standby = on
+    wal_keep_size = 128MB
+    shared_buffers = 128MB
+    effective_cache_size = 512MB
+    max_connections = 100
+    log_statement = 'all'
+    log_min_duration_statement = 1000
+    checkpoint_completion_target = 0.9
+    EOF
+
+    cat >> "$PGDATA/pg_hba.conf" <<-EOF
+
+    # Allow replication connections from replica pods - training cluster only, scope this in production
+    host replication replicator all scram-sha-256
+    EOF
+
+---
+# ConfigMap for backend application
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: todo-app
+  labels:
+    app: backend
+    component: api
+data:
+  DB_HOST: postgres-0.postgres-headless
+  DB_PORT: "5432"
+  DB_NAME: todoapp
+  DB_USER: todouser
+  REDIS_HOST: redis-service  
+  REDIS_PORT: "6379"
+  DEBUG: "false"
+  PORT: "5000"

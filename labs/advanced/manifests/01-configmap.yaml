@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: voting-app
+data:
+  title: "Azure Voting App"
+  vote1-value: "Cats"
+  vote2-value: "Dogs"

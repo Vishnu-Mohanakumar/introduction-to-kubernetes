@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: voting-app-quota
+  namespace: voting-app
+spec:
+  hard:
+    requests.cpu: "750m"
+    requests.memory: "900Mi"
+    limits.cpu: "1800m"
+    limits.memory: "1750Mi"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: voting-app-limits
+  namespace: voting-app
+spec:
+  limits:
+    - type: Container
+      max:
+        cpu: "500m"
+        memory: "512Mi"

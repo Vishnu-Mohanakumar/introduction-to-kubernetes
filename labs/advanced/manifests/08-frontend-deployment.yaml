@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-front
+  namespace: voting-app
+  labels:
+    app: azure-vote-front
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: azure-vote-front
+  template:
+    metadata:
+      labels:
+        app: azure-vote-front
+    spec:
+      containers:
+        - name: azure-vote-front
+          image: neilpeterson/azure-vote-front:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: REDIS
+              value: redis-0.redis-headless.voting-app.svc.cluster.local
+            - name: TITLE
+              valueFrom:
+                configMapKeyRef:
+                  name: frontend-config
+                  key: title
+            - name: VOTE1VALUE
+              valueFrom:
+                configMapKeyRef:
+                  name: frontend-config
+                  key: vote1-value
+            - name: VOTE2VALUE
+              valueFrom:
+                configMapKeyRef:
+                  name: frontend-config
+                  key: vote2-value
