@@ -143,6 +143,17 @@ curl http://localhost:8080/api/info
 open http://localhost:8080
 ```
 
+On killercoda, `localhost` is the remote VM, not your laptop, so use this instead:
+
+```bash
+# Listen on all interfaces so killercoda can reach it
+kubectl port-forward --address 0.0.0.0 -n demo-app service/demo-app-service 8080:80
+curl http://localhost:8080/health           # curl works on the VM itself
+```
+
+Open the printed URL (or use the Traffic / Ports menu in the terminal's top-right navigation and
+enter `8080`). More detail in `../killercoda/README.md`.
+
 ## What You'll See
 
 ### Web Dashboard
@@ -228,6 +239,7 @@ kubectl get events -n demo-app --sort-by='.lastTimestamp'
 ```bash
 pkill -f "kubectl port-forward"
 kubectl port-forward -n demo-app service/demo-app-service 8080:80
+# on killercoda, add --address 0.0.0.0 (see the dashboard step above)
 ```
 
 ### RBAC Issues

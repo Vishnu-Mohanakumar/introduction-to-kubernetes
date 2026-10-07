@@ -35,3 +35,22 @@ docker build -t todo-frontend:latest ./frontend
 bash ../../killercoda/load-image.sh todo-backend:latest
 bash ../../killercoda/load-image.sh todo-frontend:latest
 ```
+
+## Opening a web app in your browser
+
+On KIND, `kubectl port-forward` plus `http://localhost:8080` just works because the cluster runs on
+your own machine. On killercoda the cluster is on a remote VM, so `localhost` is not your laptop.
+Killercoda gives you a URL for a port on the VM instead:
+
+```bash
+# listen on all interfaces, not just localhost, so killercoda's proxy can reach it
+kubectl port-forward --address 0.0.0.0 -n demo-app service/demo-app-service 8080:80 &
+
+# print the URL for port 8080
+sed 's/PORT/8080/g' /etc/killercoda/host
+```
+
+Open the URL it prints, or use the Traffic / Ports menu in the top-right navigation of the
+terminal and enter `8080`.
+
+- The service must listen on `0.0.0.0` (hence `--address 0.0.0.0`) and be served over HTTP, not HTTPS.
